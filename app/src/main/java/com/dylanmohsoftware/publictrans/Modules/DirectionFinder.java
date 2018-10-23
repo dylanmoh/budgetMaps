@@ -38,10 +38,11 @@ public class DirectionFinder {
     }
 
     private String createUrl() throws UnsupportedEncodingException {
+        String completeUrl = DIRECTION_URL_API + "&alternatives=true&mode=transit";
         String urlOrigin = URLEncoder.encode(origin, "utf-8");
         String urlDestination = URLEncoder.encode(destination, "utf-8");
-
-        return DIRECTION_URL_API + "&alternatives=true&mode=transit&origin=" + urlOrigin + "&destination=" + urlDestination + "&key=" + GOOGLE_API_KEY;
+        completeUrl += "&origin=" + urlOrigin + "&destination=" + urlDestination + "&key=" + GOOGLE_API_KEY;
+        return completeUrl;
     }
 
     private class DownloadRawData extends AsyncTask<String, Void, String> {

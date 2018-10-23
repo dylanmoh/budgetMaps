@@ -17,12 +17,15 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.view.ViewGroup.LayoutParams;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -62,8 +65,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Polyline> polyLinePaths = new ArrayList<>();
     private ProgressDialog progressDialog;
 
-    private Button filtersButton;
-    private PopupWindow filtersPopupWindow;
+    private String state = "search";
+    private RadioGroup filters;
+    private RadioButton filterSelected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,80 +82,85 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
+        state = "search";
         editTextOrigin = (EditText)findViewById(R.id.editTextOrigin);
         editTextDestination = (EditText)findViewById(R.id.editTextDestination);
-        editTextDestination.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        editTextOrigin.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    sendRequest();
-                    return true;
+                String destination = editTextDestination.getText().toString();
+                if (!destination.isEmpty()) {
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                        sendRequest();
+                        return true;
+                    }
+                    return false;
                 }
                 return false;
             }
 
         });
+        editTextDestination.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
-        filtersButton = (Button) findViewById(R.id.filter_button);
-
-        filtersButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-
-                View customView = inflater.inflate(R.layout.activity_filters,null);
-
-                filtersPopupWindow = new PopupWindow(
-                        customView,
-                        LayoutParams.MATCH_PARENT,
-                        LayoutParams.MATCH_PARENT
-                );
-
-                // Set an elevation value for popup window
-                // Call requires API level 21
-                if(Build.VERSION.SDK_INT>=21){
-                    filtersPopupWindow.setElevation(5.0f);
-                }
-
-                // Get a reference for the custom view close button
-                ImageButton closeButton = (ImageButton) customView.findViewById(R.id.filters_close);
-
-                // Set a click listener for the popup window close button
-                closeButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        // Dismiss the popup window
-                        filtersPopupWindow.dismiss();
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                String origin = editTextOrigin.getText().toString();
+                if (!origin.isEmpty()) {
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                        sendRequest();
+                        return true;
                     }
-                });
-
-                /*
-                    public void showAtLocation (View parent, int gravity, int x, int y)
-                        Display the content view in a popup window at the specified location. If the
-                        popup window cannot fit on screen, it will be clipped.
-                        Learn WindowManager.LayoutParams for more information on how gravity and the x
-                        and y parameters are related. Specifying a gravity of NO_GRAVITY is similar
-                        to specifying Gravity.LEFT | Gravity.TOP.
-
-                    Parameters
-                        parent : a parent view to get the getWindowToken() token from
-                        gravity : the gravity which controls the placement of the popup window
-                        x : the popup's x location offset
-                        y : the popup's y location offset
-                */
-                // Finally, show the popup window at the center location of root relative layout
-                filtersPopupWindow.showAtLocation((LinearLayout) findViewById(R.id.map_layout), Gravity.BOTTOM,0,0);
+                    return false;
+                }
+                return false;
             }
+
         });
+    }
+
+    public void filtersButton(View view) {
+        state = "filters";
+        findViewById(R.id.search_layout).setVisibility(View.GONE);
+        findViewById(R.id.map_layout).setVisibility(View.GONE);
+        findViewById(R.id.filters_layout).setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (state != "search") {
+            if (state == "filters") {
+                state = "search";
+                findViewById(R.id.search_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.filters_layout).setVisibility(View.GONE);
+            }
+            else if (state == "results") {
+                state = "search";
+                findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.results_layout).setVisibility(View.GONE);
+            }
+            else if (state == "steps") {
+                state = "results";
+                findViewById(R.id.results_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.steps_layout_wrap).setVisibility(View.GONE);
+            }
+            else if (state == "success") {
+                state = "steps";
+                findViewById(R.id.steps_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.map_layout).setVisibility(View.GONE);
+            }
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
     public void onItemClick(View view, int position) {
         List<RouteStep> the_steps = adapter.getItem(position).steps;
+        state = "steps";
         findViewById(R.id.results_layout).setVisibility(View.GONE);
-        findViewById(R.id.steps_layout).setVisibility(View.VISIBLE);
+        findViewById(R.id.steps_layout_wrap).setVisibility(View.VISIBLE);
 
         RecyclerView stepsRecyclerView = findViewById(R.id.steps_recyler_view);
         stepsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -161,9 +170,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void sendRequest() {
+        editTextDestination.clearFocus();
+        InputMethodManager in = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        in.hideSoftInputFromWindow(editTextDestination.getWindowToken(), 0);
         String origin = editTextOrigin.getText().toString();
         String destination = editTextDestination.getText().toString();
-
+        filters = findViewById(R.id.priority_filter);
+        filterSelected = findViewById(filters.getCheckedRadioButtonId());
+        String the_Filter = "";
+        if (filterSelected.getText() == "Less Walking") {
+            the_Filter = "less_walking";
+        }
+        else if (filterSelected.getText() == "Fewer Transfers") {
+            the_Filter = "fewer_transfers";
+        }
         if (origin.isEmpty()) {
             Toast.makeText(this, "Please enter origin!", Toast.LENGTH_SHORT).show();
             return;
@@ -202,6 +222,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onDirectionFinderList(List<Route> routes) {
         progressDialog.dismiss();
+        state = "results";
         findViewById(R.id.map_layout).setVisibility(View.GONE);
         findViewById(R.id.results_layout).setVisibility(View.VISIBLE);
 
@@ -213,8 +234,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void onDirectionFinderSuccess(View view) {
+        state = "success";
         findViewById(R.id.steps_layout).setVisibility(View.GONE);
         findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
+        if (originMarkers != null) {
+            for (Marker marker : originMarkers) {
+                marker.remove();
+            }
+        }
+        if (destinationMarker != null) {
+            for (Marker marker : destinationMarker) {
+                marker.remove();
+            }
+        }
+        if (polyLinePaths != null) {
+            for (Polyline polylinePath : polyLinePaths) {
+                polylinePath.remove();
+            }
+        }
         polyLinePaths = new ArrayList<>();
         originMarkers = new ArrayList<>();
         destinationMarker = new ArrayList<>();

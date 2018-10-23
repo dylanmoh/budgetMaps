@@ -22,27 +22,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Filters"
+        android:textColor="#000"
         android:textSize="30sp" />
 
     <RadioGroup
         android:id="@+id/priority_filter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checkedButton="@+id/fastest">
+        android:checkedButton="@+id/depart_filter">
 
         <RadioButton
-            android:id="@+id/fastest"
+            android:id="@+id/depart_filter"
             android:layout_width="match_parent"
             android:layout_height="24dp"
             android:layout_weight="1"
-            android:text="Fastest" />
+            android:buttonTint="#000"
+            android:text="Fastest"
+            android:textColor="#000" />
 
         <RadioButton
             android:id="@+id/cheapest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Cheapest" />
+            android:buttonTint="#000"
+            android:text="Cheapest"
+            android:textColor="#000" />
     </RadioGroup>
 
     <RadioGroup
@@ -56,14 +61,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="No Budget" />
+            android:buttonTint="#000"
+            android:text="No Budget"
+            android:textColor="#000" />
 
         <RadioButton
             android:id="@+id/only_free"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Only Free" />
+            android:buttonTint="#000"
+            android:text="Only Free"
+            android:textColor="#000" />
 
     </RadioGroup>
 </LinearLayout>
