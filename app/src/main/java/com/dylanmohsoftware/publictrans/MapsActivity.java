@@ -44,7 +44,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener, MyRecyclerViewAdapter.ItemClickListener {
@@ -60,6 +64,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private EditText editTextOrigin;
     private EditText editTextDestination;
+    private EditText departText;
+    private EditText arriveText;
+    private Button departButton;
+    private Button arriveButton;
     private List<Marker> originMarkers = new ArrayList<>();
     private List<Marker> destinationMarker = new ArrayList<>();
     private List<Polyline> polyLinePaths = new ArrayList<>();
@@ -117,6 +125,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
 
         });
+        departText = (EditText)findViewById(R.id.depart_text);
+        arriveText = (EditText)findViewById(R.id.arrive_text);
+        departButton = findViewById(R.id.depart_ampm);
+        arriveButton = findViewById(R.id.arrive_ampm);
+
+        Calendar c = Calendar.getInstance();
+        int mHour = c.get(Calendar.HOUR);
+        int mMinute = c.get(Calendar.MINUTE);
+        departText.setText(String.format("%02d:%02d", mHour, mMinute));
+        arriveText.setText(String.format("%02d:%02d", mHour, mMinute));
+
+        int AMorPM = c.get(Calendar.AM_PM);
+        if (AMorPM == 1) {
+            departButton.setText("PM");
+            arriveButton.setText("PM");
+        }
+        else {
+            departButton.setText("AM");
+            arriveButton.setText("AM");
+        }
+    }
+
+    public void switchDepartAMPM(View view) {
+        if (departButton.getText() == "PM") {
+            departButton.setText("AM");
+        }
+        else {
+            departButton.setText("PM");
+        }
+    }
+
+    public void switchArriveAMPM(View view) {
+        if (arriveButton.getText() == "PM") {
+            arriveButton.setText("AM");
+        }
+        else {
+            arriveButton.setText("PM");
+        }
     }
 
     public void filtersButton(View view) {
@@ -178,11 +224,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         filters = findViewById(R.id.priority_filter);
         filterSelected = findViewById(filters.getCheckedRadioButtonId());
         String the_Filter = "";
-        if (filterSelected.getText() == "Less Walking") {
-            the_Filter = "less_walking";
+        long the_Filter_value = 0;
+        if (filterSelected.getText().equals("Depart At")) {
+            the_Filter = "departure_time";
+            Date date = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            String[] hourmin = departText.getText().toString().split(":");
+            int hour = Integer.parseInt(hourmin[0].trim());
+            if (departButton.getText().equals("PM")) {
+                hour += 12;
+            }
+            int minutes = Integer.parseInt(hourmin[1].trim());
+            calendar.set(Calendar.HOUR_OF_DAY, hour);// for 6 hour
+            calendar.set(Calendar.MINUTE, minutes);
+            the_Filter_value = calendar.getTimeInMillis();
         }
-        else if (filterSelected.getText() == "Fewer Transfers") {
-            the_Filter = "fewer_transfers";
+        else if (filterSelected.getText().equals("Arrive At")) {
+            the_Filter = "arrival_time";
+            Date date = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            String[] hourmin = arriveText.getText().toString().split(":");
+            int hour = Integer.parseInt(hourmin[0].trim());
+            if (arriveButton.getText().equals("PM")) {
+                hour += 12;
+            }
+            int minutes = Integer.parseInt(hourmin[1].trim());
+            calendar.set(Calendar.HOUR_OF_DAY, hour);// for 6 hour
+            calendar.set(Calendar.MINUTE, minutes);
+            the_Filter_value = calendar.getTimeInMillis();
         }
         if (origin.isEmpty()) {
             Toast.makeText(this, "Please enter origin!", Toast.LENGTH_SHORT).show();
@@ -193,7 +264,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         try {
-            new DirectionFinder(this, origin, destination).execute();
+            new DirectionFinder(this, origin, destination, the_Filter, the_Filter_value).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
