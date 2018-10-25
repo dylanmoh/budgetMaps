@@ -36,7 +36,7 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         Route tempRoute = mData.get(position);
-        String title = "Option " + Integer.toString(tempRoute.index + 1);
+        String title = "Route " + Integer.toString(tempRoute.index + 1);
         String schedule = tempRoute.startTime.text + " - " + tempRoute.endTime.text;
         String duration = tempRoute.duration.text;
         String price = NumberFormat.getCurrencyInstance().format(tempRoute.price);

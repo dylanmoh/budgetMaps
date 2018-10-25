@@ -147,6 +147,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    public void searchButton(View view) {
+        sendRequest();
+    }
+
+    public void applyFilter(View view) {
+        String origin = editTextOrigin.getText().toString();
+        String destination = editTextDestination.getText().toString();
+        state = "search";
+        findViewById(R.id.search_layout).setVisibility(View.VISIBLE);
+        findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
+        findViewById(R.id.filters_layout).setVisibility(View.GONE);
+        if (!origin.isEmpty() && !destination.isEmpty()) {
+            sendRequest();
+        }
+    }
+
     public void switchDepartAMPM(View view) {
         if (departButton.getText() == "PM") {
             departButton.setText("AM");
@@ -264,7 +280,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         try {
-            new DirectionFinder(this, origin, destination, the_Filter, the_Filter_value).execute();
+            new DirectionFinder(this, origin, destination, the_Filter, Long.toString(the_Filter_value)).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -296,7 +312,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         state = "results";
         findViewById(R.id.map_layout).setVisibility(View.GONE);
         findViewById(R.id.results_layout).setVisibility(View.VISIBLE);
-
         RecyclerView recyclerView = findViewById(R.id.results_recyler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new MyRecyclerViewAdapter(this, routes);

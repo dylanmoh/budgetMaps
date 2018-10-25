@@ -26,14 +26,16 @@ public class DirectionFinder {
     private String origin;
     private String destination;
     private String the_filter;
-    private long the_filter_value;
+    private String the_filter_value;
 
-    public DirectionFinder(DirectionFinderListener listener, String origin, String destination, String the_filter, long the_filter_value) {
+    public DirectionFinder(DirectionFinderListener listener, String origin, String destination, String the_filter, String the_filter_value) {
         this.listener = listener;
         this.origin = origin;
         this.destination = destination;
         this.the_filter = the_filter;
-        this.the_filter_value = the_filter_value;
+        if (the_filter_value.length() > 10) {
+            this.the_filter_value = the_filter_value.substring(0, 10);
+        }
     }
 
     public void execute() throws UnsupportedEncodingException {
@@ -46,7 +48,7 @@ public class DirectionFinder {
         String urlOrigin = URLEncoder.encode(origin, "utf-8");
         String urlDestination = URLEncoder.encode(destination, "utf-8");
         if (!this.the_filter.equals("")) {
-            completeUrl += "&" + the_filter + "=" + Long.toString(this.the_filter_value);
+            completeUrl += "&" + the_filter + "=" + this.the_filter_value;
         }
         completeUrl += "&origin=" + urlOrigin + "&destination=" + urlDestination + "&key=" + GOOGLE_API_KEY;
         return completeUrl;
