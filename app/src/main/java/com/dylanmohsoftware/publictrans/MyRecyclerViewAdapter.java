@@ -25,6 +25,11 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         this.mData = routes;
     }
 
+    public void updateData(List<Route> routes) {
+        this.mData = routes;
+        notifyDataSetChanged();
+    }
+
     // inflates the row layout from xml when needed
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {

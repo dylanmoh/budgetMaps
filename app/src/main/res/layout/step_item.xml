@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/the_step"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -8,13 +9,26 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingLeft="10dp">
+        android:paddingLeft="3dp">
+
+        <ImageView
+            android:id="@+id/icon_step"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            app:srcCompat="@drawable/walk2" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="280dp"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/step_title"
-            android:layout_width="match_parent"
+            android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:text="Name"
             android:textColor="#05f"
@@ -33,13 +47,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="right|center_vertical"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingRight="3dp">
 
         <TextView
             android:id="@+id/step_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Duration" />
+
+        <TextView
+            android:id="@+id/step_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:text="$5.00"
+            android:textColor="#5a5" />
 
     </LinearLayout>
 

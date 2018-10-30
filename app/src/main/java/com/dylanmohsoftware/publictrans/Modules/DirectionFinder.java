@@ -16,6 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,6 +132,7 @@ public class DirectionFinder {
                 RouteStep step = new RouteStep();
                 JSONObject jsonStepDistance = jsonStep.getJSONObject("distance");
                 JSONObject jsonStepDuration = jsonStep.getJSONObject("duration");
+                JSONObject jsonStepLocation = jsonStep.getJSONObject("end_location");
                 if (jsonStep.getString("travel_mode").equals("WALKING")) {
                     step.vehicle = new Vehicle("walking_icon", "WALKING", "walking", 0);
                 }
@@ -143,7 +145,7 @@ public class DirectionFinder {
                 step.name = jsonStep.getString("html_instructions");
                 step.distance = new Distance(jsonStepDistance.getString("text"), jsonStepDistance.getInt("value"));
                 step.duration = new Duration(jsonStepDuration.getString("text"), jsonStepDuration.getInt("value"));
-
+                step.location =  new LatLng(Double.parseDouble(new DecimalFormat("#.#####").format(jsonStepLocation.getDouble("lat"))), Double.parseDouble(new DecimalFormat("#.#####").format(jsonStepLocation.getDouble("lng"))));
                 steps.add(step);
                 totalPrice = totalPrice + step.vehicle.price;
             }

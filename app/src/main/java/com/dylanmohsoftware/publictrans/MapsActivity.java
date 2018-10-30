@@ -4,8 +4,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
+import android.net.Uri;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -51,7 +54,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener, MyRecyclerViewAdapter.ItemClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener, MyRecyclerViewAdapter.ItemClickListener, StepsRecyclerViewAdapter.StepClickListener {
 
     MyRecyclerViewAdapter adapter;
     StepsRecyclerViewAdapter stepsAdapter;
@@ -220,15 +223,38 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onItemClick(View view, int position) {
         List<RouteStep> the_steps = adapter.getItem(position).steps;
+        theSelectedRoute = adapter.getItem(position);
         state = "steps";
         findViewById(R.id.results_layout).setVisibility(View.GONE);
         findViewById(R.id.steps_layout_wrap).setVisibility(View.VISIBLE);
 
         RecyclerView stepsRecyclerView = findViewById(R.id.steps_recyler_view);
-        stepsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        stepsAdapter = new StepsRecyclerViewAdapter(this, the_steps);
+        if (stepsAdapter != null) {
+            stepsAdapter.updateData(the_steps);
+        }
+        else {
+            stepsAdapter = new StepsRecyclerViewAdapter(this, the_steps);
+        }
+        stepsAdapter.setStepClickListener(this);
         stepsRecyclerView.setAdapter(stepsAdapter);
-        theSelectedRoute = adapter.getItem(position);
+        stepsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    @Override
+    public void onStepClick(View view, int position) {
+        RouteStep tempStep = stepsAdapter.getItem(position);
+        if (tempStep.vehicle.type.equals("BUS") && tempStep.vehicle.price > 0) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.rideuta.com/Fares-And-Passes/Current-Fares/#local-bus-trax-and-streetcar"));
+            startActivity(browserIntent);
+        }
+        else if (tempStep.vehicle.type.equals("HEAVY_RAIL") && tempStep.vehicle.price > 0) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.rideuta.com/Fares-And-Passes/Current-Fares/#frontrunner"));
+            startActivity(browserIntent);
+        }
+        else if (tempStep.vehicle.type.equals("TRAM") && tempStep.vehicle.price > 0) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.rideuta.com/Fares-And-Passes/Current-Fares/#local-bus-trax-and-streetcar"));
+            startActivity(browserIntent);
+        }
     }
 
     private void sendRequest() {
@@ -313,10 +339,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         findViewById(R.id.map_layout).setVisibility(View.GONE);
         findViewById(R.id.results_layout).setVisibility(View.VISIBLE);
         RecyclerView recyclerView = findViewById(R.id.results_recyler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new MyRecyclerViewAdapter(this, routes);
+        if (adapter != null) {
+            adapter.updateData(routes);
+        }
+        else {
+            adapter = new MyRecyclerViewAdapter(this, routes);
+        }
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     public void onDirectionFinderSuccess(View view) {
@@ -359,11 +390,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .color(Color.BLUE)
                     .width(10);
 
+            int j = 0;
+            if (theSelectedRoute.steps.get(j).vehicle.type.equals("BUS")) {
+                polylineOptions.color(Color.GREEN);
+            }
+            else if (theSelectedRoute.steps.get(j).vehicle.type.equals("TRAM")) {
+                polylineOptions.color(Color.RED);
+            }
+            else if (theSelectedRoute.steps.get(j).vehicle.type.equals("HEAVY_RAIL")) {
+                polylineOptions.color(Color.MAGENTA);
+            }
+            Location locationStep = new Location("");
+            Location locationPoint = new Location("");
+            locationStep.setLatitude(theSelectedRoute.steps.get(j).location.latitude);
+            locationStep.setLongitude(theSelectedRoute.steps.get(j).location.longitude);
             for (int i = 0; i < theSelectedRoute.points.size(); i++) {
                 polylineOptions.add(theSelectedRoute.points.get(i));
-            }
+                locationPoint.setLatitude(theSelectedRoute.points.get(i).latitude);
+                locationPoint.setLongitude(theSelectedRoute.points.get(i).longitude);
+                Float distanceBetween = locationPoint.distanceTo(locationStep);
+                if ( distanceBetween == 0 ) {
+                    polyLinePaths.add(mMap.addPolyline(polylineOptions));
+                    j++;
+                    if (j < theSelectedRoute.steps.size()) {
+                        locationStep.setLatitude(theSelectedRoute.steps.get(j).location.latitude);
+                        locationStep.setLongitude(theSelectedRoute.steps.get(j).location.longitude);
+                        polylineOptions = new PolylineOptions()
+                                .geodesic(true)
+                                .color(Color.BLUE)
+                                .width(10);
 
-            polyLinePaths.add(mMap.addPolyline(polylineOptions));
+                        if (theSelectedRoute.steps.get(j).vehicle.type.equals("BUS")) {
+                            polylineOptions.color(Color.GREEN);
+                        } else if (theSelectedRoute.steps.get(j).vehicle.type.equals("TRAM")) {
+                            polylineOptions.color(Color.RED);
+                        } else if (theSelectedRoute.steps.get(j).vehicle.type.equals("HEAVY_RAIL")) {
+                            polylineOptions.color(Color.MAGENTA);
+                        }
+                    }
+                }
+            }
     }
 
     /**
