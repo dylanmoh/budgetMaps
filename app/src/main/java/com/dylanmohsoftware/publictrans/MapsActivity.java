@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
@@ -116,13 +117,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                String origin = editTextOrigin.getText().toString();
-                if (!origin.isEmpty()) {
-                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                        sendRequest();
-                        return true;
-                    }
-                    return false;
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    sendRequest();
+                    return true;
                 }
                 return false;
             }
@@ -155,13 +152,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void applyFilter(View view) {
-        String origin = editTextOrigin.getText().toString();
         String destination = editTextDestination.getText().toString();
         state = "search";
         findViewById(R.id.search_layout).setVisibility(View.VISIBLE);
         findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
         findViewById(R.id.filters_layout).setVisibility(View.GONE);
-        if (!origin.isEmpty() && !destination.isEmpty()) {
+        if (!destination.isEmpty()) {
             sendRequest();
         }
     }
@@ -262,6 +258,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         InputMethodManager in = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         in.hideSoftInputFromWindow(editTextDestination.getWindowToken(), 0);
         String origin = editTextOrigin.getText().toString();
+        if (origin.isEmpty()) {
+            LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            double longitude = location.getLongitude();
+            double latitude = location.getLatitude();
+            origin = Double.toString(latitude) + "," + Double.toString(longitude);
+        }
         String destination = editTextDestination.getText().toString();
         filters = findViewById(R.id.priority_filter);
         filterSelected = findViewById(filters.getCheckedRadioButtonId());
@@ -348,6 +351,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        findViewById(R.id.no_results).setVisibility(View.GONE);
+        if (adapter.getNoResults()) {
+            findViewById(R.id.no_results).setVisibility(View.VISIBLE);
+        }
     }
 
     public void onDirectionFinderSuccess(View view) {

@@ -18,15 +18,24 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     private List<Route> mData;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
+    private boolean noResults;
 
     // data is passed into the constructor
     MyRecyclerViewAdapter(Context context, List<Route> routes) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = routes;
+        noResults = false;
+        if (this.mData.size() == 0 ) {
+            noResults = true;
+        }
     }
 
     public void updateData(List<Route> routes) {
         this.mData = routes;
+        noResults = false;
+        if (this.mData.size() == 0 ) {
+            noResults = true;
+        }
         notifyDataSetChanged();
     }
 
@@ -96,5 +105,9 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
+    }
+
+    boolean getNoResults() {
+        return noResults;
     }
 }
