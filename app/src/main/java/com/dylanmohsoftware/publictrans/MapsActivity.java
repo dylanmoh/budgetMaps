@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -36,6 +37,10 @@ import com.dylanmohsoftware.publictrans.Modules.DirectionFinder;
 import com.dylanmohsoftware.publictrans.Modules.DirectionFinderListener;
 import com.dylanmohsoftware.publictrans.Modules.Route;
 import com.dylanmohsoftware.publictrans.Modules.RouteStep;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -65,8 +70,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Route theSelectedRoute;
 
     private GoogleMap mMap;
-    private EditText editTextOrigin;
-    private EditText editTextDestination;
+    PlaceAutocompleteFragment autoTextOrigin;
+    PlaceAutocompleteFragment autoTextDestination;
+    private String editTextOrigin = "";
+    private String editTextDestination = "";
     private EditText departText;
     private EditText arriveText;
     private Button departButton;
@@ -94,39 +101,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         state = "search";
-        editTextOrigin = (EditText)findViewById(R.id.editTextOrigin);
-        editTextDestination = (EditText)findViewById(R.id.editTextDestination);
-        editTextOrigin.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-
+        autoTextOrigin = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.editTextOrigin);
+        autoTextOrigin.setHint("Search Origin Address");
+        autoTextOrigin.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                String destination = editTextDestination.getText().toString();
-                if (!destination.isEmpty()) {
-                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+            public void onPlaceSelected(Place place) {
+                editTextOrigin = place.getName().toString();
+                if (!editTextDestination.isEmpty()) {
                         sendRequest();
-                        return true;
-                    }
-                    return false;
                 }
-                return false;
             }
 
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i("", "An error occurred: " + status);
+            }
         });
-        editTextDestination.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-
+        autoTextDestination = (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.editTextDestination);
+        autoTextDestination.setHint("Search Destination Address");
+        autoTextDestination.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                String origin = editTextOrigin.getText().toString();
-                if (!origin.isEmpty()) {
-                    if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                        sendRequest();
-                        return true;
-                    }
-                    return false;
+            public void onPlaceSelected(Place place) {
+                editTextDestination = place.getName().toString();
+                if (!editTextOrigin.isEmpty()) {
+                    sendRequest();
                 }
-                return false;
             }
 
+            @Override
+            public void onError(Status status) {
+                // TODO: Handle the error.
+                Log.i("", "An error occurred: " + status);
+            }
         });
         departText = (EditText)findViewById(R.id.depart_text);
         arriveText = (EditText)findViewById(R.id.arrive_text);
@@ -155,13 +162,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void applyFilter(View view) {
-        String origin = editTextOrigin.getText().toString();
-        String destination = editTextDestination.getText().toString();
         state = "search";
         findViewById(R.id.search_layout).setVisibility(View.VISIBLE);
         findViewById(R.id.map_layout).setVisibility(View.VISIBLE);
         findViewById(R.id.filters_layout).setVisibility(View.GONE);
-        if (!origin.isEmpty() && !destination.isEmpty()) {
+        if (!editTextOrigin.isEmpty() && !editTextDestination.isEmpty()) {
             sendRequest();
         }
     }
@@ -258,11 +263,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void sendRequest() {
-        editTextDestination.clearFocus();
-        InputMethodManager in = (InputMethodManager) mActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-        in.hideSoftInputFromWindow(editTextDestination.getWindowToken(), 0);
-        String origin = editTextOrigin.getText().toString();
-        String destination = editTextDestination.getText().toString();
         filters = findViewById(R.id.priority_filter);
         filterSelected = findViewById(filters.getCheckedRadioButtonId());
         String the_Filter = "";
@@ -297,16 +297,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             calendar.set(Calendar.MINUTE, minutes);
             the_Filter_value = calendar.getTimeInMillis();
         }
-        if (origin.isEmpty()) {
+        if (editTextOrigin.isEmpty()) {
             Toast.makeText(this, "Please enter origin!", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (destination.isEmpty()){
+        if (editTextDestination.isEmpty()){
             Toast.makeText(this, "Please enter destination!", Toast.LENGTH_SHORT).show();
             return;
         }
         try {
-            new DirectionFinder(this, origin, destination, the_Filter, Long.toString(the_Filter_value)).execute();
+            new DirectionFinder(this, editTextOrigin, editTextDestination, the_Filter, Long.toString(the_Filter_value)).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
