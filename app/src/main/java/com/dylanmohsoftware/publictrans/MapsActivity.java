@@ -416,7 +416,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 locationPoint.setLatitude(theSelectedRoute.points.get(i).latitude);
                 locationPoint.setLongitude(theSelectedRoute.points.get(i).longitude);
                 Float distanceBetween = locationPoint.distanceTo(locationStep);
-                if ( distanceBetween == 0 ) {
+                if ( i < theSelectedRoute.points.size() - 1 && distanceBetween == 0 ) {
                     polyLinePaths.add(mMap.addPolyline(polylineOptions));
                     j++;
                     if (j < theSelectedRoute.steps.size()) {
@@ -437,6 +437,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                 }
             }
+            polyLinePaths.add(mMap.addPolyline(polylineOptions));
     }
 
     /**

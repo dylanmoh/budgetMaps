@@ -28,7 +28,7 @@
 
         <TextView
             android:id="@+id/step_title"
-            android:layout_width="250dp"
+            android:layout_width="240dp"
             android:layout_height="wrap_content"
             android:text="Name"
             android:textColor="#05f"
